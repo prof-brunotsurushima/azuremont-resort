@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Totem HOTEL IA</title>
+    <style>
+        /* Design pensado para alto contraste e facilidade de toque */
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 1.5rem;
+            color: #aaaaaa;
+            margin-bottom: 40px;
+        }
+        /* Botão gigante para facilitar a interação */
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 250px;
+            height: 250px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.5);
+            transition: 0.2s;
+        }
+        button:active {
+            transform: scale(0.95);
+            background-color: #0056b3;
+        }
+        #status {
+            margin-top: 30px;
+            font-size: 1.5rem;
+            color: #ffeb3b;
+            min-height: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Totem HOTEL IA</h1>
+    <p>Toque no botão e faça sua pergunta.</p>
+    
+    <button id="btnFalar">FALAR 🎤</button>
+    <div id="status">Aguardando comando...</div>
+
+    <script>
+        const btnFalar = document.getElementById('btnFalar');
+        const statusDiv = document.getElementById('status');
+
+        // Puxa a API de reconhecimento de voz do navegador (Chrome usa webkit)
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            statusDiv.innerText = "O navegador deste tablet não suporta reconhecimento de voz. Tente usar o Google Chrome.";
+        } else {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'pt-BR'; // Define o idioma para Português do Brasil
+            recognition.interimResults = false;
+
+            // --- CÉREBRO DA IA: AS RESPOSTAS DO HOTEL ---
+            // Aqui vocês podem editar o texto para bater com a planta baixa que vão desenhar!
+            const respostas = {
+                "quarto": "Para ir ao seu quarto, siga em frente pelo corredor principal por dez passos e utilize o elevador à sua direita. O piso tátil guiará você até a porta.",
+                "restaurante": "O restaurante fica à esquerda da recepção. A partir deste totem, dê cinco passos para a esquerda, acompanhando a parede, até encontrar a entrada.",
+                "banheiro": "O banheiro mais próximo está logo atrás da recepção. Siga em frente, passe pelo balcão e vire na primeira à direita.",
+                "piscina": "Para chegar à piscina, siga direto pelo corredor principal até o final e empurre as portas duplas de vidro.",
+                "erro": "Desculpe, não entendi. Por favor, pergunte sobre o quarto, restaurante, banheiro ou piscina."
+            };
+
+            // Ação ao clicar no botão
+            btnFalar.addEventListener('click', () => {
+                recognition.start();
+                statusDiv.innerText = "Ouvindo... Pode falar!";
+            });
+
+            // Quando a pessoa termina de falar e o tablet entende o texto
+            recognition.addEventListener('result', (event) => {
+                const textoFalado = event.results[0][0].transcript.toLowerCase();
+                statusDiv.innerText = `Você perguntou sobre: "${textoFalado}"`;
+                processarPergunta(textoFalado);
+            });
+
+            // Em caso de erro na escuta
+            recognition.addEventListener('error', (event) => {
+                statusDiv.innerText = "Não consegui ouvir. Toque no botão e tente novamente.";
+            });
+
+            // Função que procura a palavra-chave e escolhe a resposta
+            function processarPergunta(pergunta) {
+                let resposta = respostas["erro"];
+
+                // A IA procura palavras-chave dentro do que a pessoa falou
+                if (pergunta.includes("quarto") || pergunta.includes("dormir")) {
+                    resposta = respostas["quarto"];
+                } else if (pergunta.includes("restaurante") || pergunta.includes("comer") || pergunta.includes("fome")) {
+                    resposta = respostas["restaurante"];
+                } else if (pergunta.includes("banheiro")) {
+                    resposta = respostas["banheiro"];
+                } else if (pergunta.includes("piscina") || pergunta.includes("nadar")) {
+                    resposta = respostas["piscina"];
+                }
+
+                falar(resposta);
+            }
+
+            // Função que transforma o texto em áudio
+            function falar(texto) {
+                const sintese = window.speechSynthesis;
+                const utterance = new SpeechSynthesisUtterance(texto);
+                utterance.lang = 'pt-BR';
+                utterance.rate = 1.0; // Velocidade da fala (1.0 é o normal)
+                sintese.speak(utterance);
+                
+                // Limpa a tela quando terminar de falar
+                utterance.onend = () => {
+                    setTimeout(() => {
+                        statusDiv.innerText = "Aguardando novo comando...";
+                    }, 3000);
+                };
+            }
+        }
+    </script>
+</body>
+</html>
